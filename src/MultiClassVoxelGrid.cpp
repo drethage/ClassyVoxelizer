@@ -115,13 +115,10 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 
 					uint8_t class_i = getVoxelClass(voxel_id);
 
-					if (class_color_mapping[class_i] == Eigen::Vector3i(0,0,0))
-						continue;
-
 					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
 
 					output_file << voxel_pos[0] << " " << voxel_pos[1] << " " << voxel_pos[2] << " "
-            << class_color_mapping[class_i][0] << " " << class_color_mapping[class_i][1] << " " << class_color_mapping[class_i][2] << " " << "255" << std::endl;
+            << class_color_mapping[class_i-1][0] << " " << class_color_mapping[class_i-1][1] << " " << class_color_mapping[class_i-1][2] << " " << "255" << std::endl;
 
 				}
 

@@ -59,7 +59,7 @@ bool readPly(std::string filepath, std::vector<Eigen::Vector3f> &vertices, std::
     }
 
     if (colormap.size() > 256) {
-        std::cerr << "Error: MultiClassVoxelizer only supports up to 256 classes." << std::endl;
+        std::cerr << "Error: ClassyVoxelizer only supports up to 255 classes." << std::endl;
         return false;
     }
 
@@ -84,7 +84,7 @@ bool readPly(std::string filepath, std::vector<Eigen::Vector3f> &vertices, std::
             }
         }
 
-        vertex_classes[vertex_class_i++] = class_i;
+        vertex_classes[vertex_class_i++] = class_i+1;
     }
 
     return true;
