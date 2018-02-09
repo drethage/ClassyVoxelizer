@@ -18,6 +18,8 @@
 //Eigen
 #include <Eigen/Dense>
 
+#include "tinyply.h"
+
 class ColoredVoxelGrid {
 public:
     ColoredVoxelGrid(Eigen::Vector3f grid_min, Eigen::Vector3f grid_max, float voxel_size);

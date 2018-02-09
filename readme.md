@@ -13,14 +13,17 @@ make
 
 ### Usage:
 
-`./classy_voxelizer <input> <output> <voxel_size> <class/color>`
+For point clouds in which colors represent classes:
+`./classy_voxelizer <input> <output> <voxel_size> class`
+
+For point clouds in which colors don't represent classes:
+`./classy_voxelizer <input> <output> <voxel_size> color`
 
 ### Notes:
-* Currently only supports ASCII-encoded PLY
-* Assumes each vertex has the following properties in order: x, y, z, red, green, blue, alpha
+* Reads ASCII/binary PLY, writes binary PLY (thanks to [tinyply](https://github.com/ddiakopoulos/tinyply))
 * <voxel_size> argument in meters
 * Requires Eigen3
 
 
-### License
+### License:
 [BSD 2-Clause License](LICENSE)

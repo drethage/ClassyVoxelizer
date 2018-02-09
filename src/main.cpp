@@ -14,69 +14,59 @@
 #include <vector>
 #include <set>
 
+#include "tinyply.h"
 #include "MultiClassVoxelGrid.h"
 #include "MultiClassVoxelizer.h"
 #include "ColoredVoxelizer.h"
 #include "ColoredVoxelGrid.h"
 
-bool readPlyWithClass(std::string filepath, std::vector<Eigen::Vector3f> &vertices, std::vector<uint32_t> &faces, std::vector<uint8_t> &vertex_classes, std::vector<Eigen::Vector3i> &colormap) {
+bool readPlyWithClass(std::string filepath, std::vector<Eigen::Vector3f> &vertices, std::vector<uint32_t> &faces, std::vector<uint8_t> &classes, std::vector<Eigen::Vector3i> &colormap) {
 
-    std::ifstream input_file(filepath, std::ios::in | std::ios::binary);
+    std::ifstream ss(filepath, std::ios::binary);
 
-    int num_vertices = 0;
-    int num_faces = 0;
-    std::string word;
-    input_file >> word;
-    while (word != "end_header") {
-        if (word == "vertex") {
-            input_file >> num_vertices;
-        } else if (word == "face") {
-            input_file >> num_faces;
-        }
-        input_file >> word;
-    }
+    tinyply::PlyFile input_file(ss);
+
+    std::vector<float> raw_vertices;
+    std::vector<uint8_t> raw_colors;
+    uint32_t num_vertices, num_colors, num_faces;
+    num_vertices = num_colors = num_faces = 0;
+
+    num_vertices = input_file.request_properties_from_element("vertex", { "x", "y", "z" }, raw_vertices);
+    num_colors = input_file.request_properties_from_element("vertex", { "red", "green", "blue" }, raw_colors);
+    num_faces = input_file.request_properties_from_element("face", { "vertex_indices" }, faces, 3);
+
+    input_file.read(ss);
 
     vertices.resize(num_vertices);
-    faces.resize(num_faces * 3);
-    vertex_classes.resize(num_vertices);
+    classes.resize(num_vertices);
+    std::vector<Eigen::Vector3i> colors(num_vertices);
 
-    std::vector<Eigen::Vector3i> colors_list(num_vertices);
-
-    int alpha = 0;
+    int raw_vertices_i = 0;
+    int raw_colors_i = 0;
     for (int i = 0; i < num_vertices; i++) {
 
-        input_file >> vertices[i][0];
-        input_file >> vertices[i][1];
-        input_file >> vertices[i][2];
-        input_file >> colors_list[i][0];
-        input_file >> colors_list[i][1];
-        input_file >> colors_list[i][2];
-        input_file >> alpha;
+        vertices[i][0] = raw_vertices[raw_vertices_i++];
+        vertices[i][1] = raw_vertices[raw_vertices_i++];
+        vertices[i][2] = raw_vertices[raw_vertices_i++];
+
+        colors[i][0] = raw_colors[raw_colors_i++];
+        colors[i][1] = raw_colors[raw_colors_i++];
+        colors[i][2] = raw_colors[raw_colors_i++];
 
     }
 
-    for (auto& color : colors_list) {
+    for (const auto& color : colors) {
         if(std::find(colormap.begin(), colormap.end(), color) == colormap.end())
             colormap.push_back(color);
     }
 
-    if (colormap.size() > 256) {
+    if (colormap.size() > 255) {
         std::cerr << "Error: ClassyVoxelizer only supports up to 255 classes." << std::endl;
         return false;
     }
 
-    int num_vertices_per_face = 0;
-    int face_vertex_i = 0;
-
-    for (int i = 0; i < num_faces; i++) {
-        input_file >> num_vertices_per_face;
-        input_file >> faces[face_vertex_i++];
-        input_file >> faces[face_vertex_i++];
-        input_file >> faces[face_vertex_i++];
-    }
-
     int vertex_class_i = 0;
-    for (auto color : colors_list) {
+    for (const auto& color : colors) {
 
         int class_i;
         for (class_i = 0; class_i < colormap.size(); class_i++) {
@@ -86,55 +76,51 @@ bool readPlyWithClass(std::string filepath, std::vector<Eigen::Vector3f> &vertic
             }
         }
 
-        vertex_classes[vertex_class_i++] = class_i+1;
+        classes[vertex_class_i++] = class_i+1;
     }
 
     return true;
 
 }
 
-bool readPlyWithColor(std::string filepath, std::vector<Eigen::Vector3f> &vertices, std::vector<uint32_t> &faces, std::vector<Eigen::Vector3i> &vertex_colors) {
+bool readPlyWithColor(std::string filepath, std::vector<Eigen::Vector3f> &vertices, std::vector<uint32_t> &faces, std::vector<Eigen::Vector3i> &colors) {
 
-    std::ifstream input_file(filepath, std::ios::in | std::ios::binary);
+    std::ifstream ss(filepath, std::ios::binary);
 
-    int num_vertices = 0;
-    int num_faces = 0;
-    std::string word;
-    input_file >> word;
-    while (word != "end_header") {
-        if (word == "vertex") {
-            input_file >> num_vertices;
-        } else if (word == "face") {
-            input_file >> num_faces;
-        }
-        input_file >> word;
-    }
+    tinyply::PlyFile input_file(ss);
+
+    std::vector<float> raw_vertices;
+    std::vector<uint8_t> raw_colors;
+    uint32_t num_vertices, num_colors, num_faces;
+    num_vertices = num_colors = num_faces = 0;
+
+    num_vertices = input_file.request_properties_from_element("vertex", { "x", "y", "z" }, raw_vertices);
+    num_colors = input_file.request_properties_from_element("vertex", { "red", "green", "blue" }, raw_colors);
+    num_faces = input_file.request_properties_from_element("face", { "vertex_indices" }, faces, 3);
+
+    std::cout << "worked " << num_vertices << std::endl;
+
+    input_file.read(ss);
+
+    std::cout << "worked 2 " << raw_vertices.size() << std::endl;
+
+    std::cout << "worked 2 " << raw_colors.size() << std::endl;
 
     vertices.resize(num_vertices);
-    faces.resize(num_faces * 3);
-    vertex_colors.resize(num_vertices);
+    colors.resize(num_vertices);
 
-    int alpha = 0;
+    int raw_vertices_i = 0;
+    int raw_colors_i = 0;
     for (int i = 0; i < num_vertices; i++) {
 
-        input_file >> vertices[i][0];
-        input_file >> vertices[i][1];
-        input_file >> vertices[i][2];
-        input_file >> vertex_colors[i][0];
-        input_file >> vertex_colors[i][1];
-        input_file >> vertex_colors[i][2];
-        input_file >> alpha;
+        vertices[i][0] = raw_vertices[raw_vertices_i++];
+        vertices[i][1] = raw_vertices[raw_vertices_i++];
+        vertices[i][2] = raw_vertices[raw_vertices_i++];
 
-    }
+        colors[i][0] = raw_colors[raw_colors_i++];
+        colors[i][1] = raw_colors[raw_colors_i++];
+        colors[i][2] = raw_colors[raw_colors_i++];
 
-    int num_vertices_per_face = 0;
-    int face_vertex_i = 0;
-
-    for (int i = 0; i < num_faces; i++) {
-        input_file >> num_vertices_per_face;
-        input_file >> faces[face_vertex_i++];
-        input_file >> faces[face_vertex_i++];
-        input_file >> faces[face_vertex_i++];
     }
 
     // for (auto vertex : vertices)
@@ -143,7 +129,7 @@ bool readPlyWithColor(std::string filepath, std::vector<Eigen::Vector3f> &vertic
     // for (auto face : faces)
     //     std::cout << std::to_string(face) << std::endl;
 
-    // for (auto vertex_color : vertex_colors)
+    // for (auto vertex_color : colors)
     //     std::cout << std::to_string(vertex_color[0]) << " " << std::to_string(vertex_color[1]) << " " << std::to_string(vertex_color[2]) << std::endl;
 
     return true;

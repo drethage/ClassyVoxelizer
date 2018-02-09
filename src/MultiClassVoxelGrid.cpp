@@ -85,26 +85,17 @@ void MultiClassVoxelGrid::saveAsRAW(std::string filepath) {
 
 void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping) {
 
-	std::ofstream output_file(filepath);
-
-	long num_occupied_voxels = 0;
-	for (auto voxel : _voxelgrid) {
+	unsigned int num_occupied_voxels = 0;
+	for (const auto& voxel : _voxelgrid) {
 		if (voxel != 0)
 			num_occupied_voxels++;
 	}
 
-	output_file << "ply" << std::endl;
-    output_file << "format ascii 1.0" << std::endl;
-    output_file << "element vertex " << num_occupied_voxels << std::endl;
-    output_file << "property float x" << std::endl;
-    output_file << "property float y" << std::endl;
-    output_file << "property float z" << std::endl;
-    output_file << "property uchar red" << std::endl;
-    output_file << "property uchar green" << std::endl;
-    output_file << "property uchar blue" << std::endl;
-	output_file << "property uchar alpha" << std::endl;
-	output_file << "end_header" << std::endl;
+	std::vector<float> vertices(num_occupied_voxels * 3);
+	std::vector<uint8_t> colors(num_occupied_voxels * 4);
 
+	unsigned int raw_vertex_i = 0;
+	unsigned int raw_color_i = 0;
 	for (int i = 0; i < _voxels_per_dim[0]; i++) {
 		for (int j = 0; j < _voxels_per_dim[1]; j++) {
 			for (int k = 0; k < _voxels_per_dim[2]; k++) {
@@ -114,19 +105,33 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 				if (isVoxelOccupied(voxel_id)) {
 
 					uint8_t class_i = getVoxelClass(voxel_id);
-
+					Eigen::Vector3i color(class_color_mapping[class_i-1][0], class_color_mapping[class_i-1][1], class_color_mapping[class_i-1][2]);
 					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
 
-					output_file << voxel_pos[0] << " " << voxel_pos[1] << " " << voxel_pos[2] << " "
-            << class_color_mapping[class_i-1][0] << " " << class_color_mapping[class_i-1][1] << " " << class_color_mapping[class_i-1][2] << " " << "255" << std::endl;
+					vertices[raw_vertex_i++] = voxel_pos[0];
+					vertices[raw_vertex_i++] = voxel_pos[1];
+					vertices[raw_vertex_i++] = voxel_pos[2];
+
+					colors[raw_color_i++] = color[0];
+					colors[raw_color_i++] = color[1];
+					colors[raw_color_i++] = color[2];
+					colors[raw_color_i++] = 255;
 
 				}
 
 			}
 		}		
 	}
-	
-	output_file.close();
+
+	std::filebuf fb;
+	fb.open(filepath, std::ios::out | std::ios::binary);
+	std::ostream ss(&fb);
+
+	tinyply::PlyFile out_file;
+	out_file.add_properties_to_element("vertex", { "x", "y", "z" }, vertices);
+	out_file.add_properties_to_element("vertex", { "red", "green", "blue", "alpha" }, colors);
+	out_file.write(ss, true);
+	fb.close();
 
 }
 

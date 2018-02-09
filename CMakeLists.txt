@@ -7,11 +7,11 @@ project(ClassyVoxelizer)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 set(HEADER_DIR ${PROJECT_SOURCE_DIR}/include)
 set(SOURCE_DIR ${PROJECT_SOURCE_DIR}/src)
-set(HEADER_FILES ${HEADER_DIR}/MultiClassVoxelGrid.h ${HEADER_DIR}/MultiClassVoxelizer.h ${HEADER_DIR}/ColoredVoxelGrid.h ${HEADER_DIR}/ColoredVoxelizer.h)
+set(HEADER_FILES ${HEADER_DIR}/MultiClassVoxelGrid.h ${HEADER_DIR}/MultiClassVoxelizer.h ${HEADER_DIR}/ColoredVoxelGrid.h ${HEADER_DIR}/ColoredVoxelizer.h ${HEADER_DIR}/tinyply.h)
 
 find_package(Eigen3 REQUIRED)
 
 include_directories(${HEADER_DIR})
 include_directories(${EIGEN3_INCLUDE_DIR})
 
-add_executable(classy_voxelizer ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/MultiClassVoxelizer.cpp ${SOURCE_DIR}/MultiClassVoxelGrid.cpp ${SOURCE_DIR}/ColoredVoxelizer.cpp ${SOURCE_DIR}/ColoredVoxelGrid.cpp)
+add_executable(classy_voxelizer ${SOURCE_DIR}/main.cpp ${SOURCE_DIR}/MultiClassVoxelizer.cpp ${SOURCE_DIR}/MultiClassVoxelGrid.cpp ${SOURCE_DIR}/ColoredVoxelizer.cpp ${SOURCE_DIR}/ColoredVoxelGrid.cpp ${SOURCE_DIR}/tinyply.cpp)
