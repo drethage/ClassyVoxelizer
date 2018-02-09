@@ -1,6 +1,6 @@
 Classy Voxelizer
 ====
-Voxelizes a mesh at a given voxel size using a face splitting algorithm. Classy Voxelizer treats the colors of points as corresponding to classes and preserves these during voxelization.
+Voxelizes a mesh at a given voxel size using a face splitting algorithm. Classy Voxelizer can treat the colors of points as corresponding to classes and preserves these during voxelization. Or it can just treat them as colors to produce a colored voxelization.
 
 ![Teaser](img/teaser.png)
 
@@ -13,7 +13,7 @@ make
 
 ### Usage:
 
-`./classy_voxelizer <input> <output> <voxel_size>`
+`./classy_voxelizer <input> <output> <voxel_size> <class/color>`
 
 ### Notes:
 * Currently only supports ASCII-encoded PLY

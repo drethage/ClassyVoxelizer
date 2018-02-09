@@ -5,21 +5,24 @@
  Copyright (c) 2018, Dario Rethage
  See LICENSE at package root for full license
  */
-#include "MultiClassVoxelGrid.h"
+#include "ColoredVoxelGrid.h"
 
-MultiClassVoxelGrid::MultiClassVoxelGrid(Eigen::Vector3f grid_min, Eigen::Vector3f grid_max, float voxel_size) {
+ColoredVoxelGrid::ColoredVoxelGrid(Eigen::Vector3f grid_min, Eigen::Vector3f grid_max, float voxel_size) {
     
     _grid_min = grid_min;
     _grid_max = grid_max;
     _grid_size = grid_max - grid_min;
+    std::cout << _grid_size[0] << " " << _grid_size[1] << " " << _grid_size[2] << std::endl;
     _voxel_size = voxel_size;
 	_voxels_per_dim = (_grid_size / voxel_size).cast<int>();   
     _num_voxels = _voxels_per_dim.prod();
-    _voxelgrid.resize(_num_voxels, 0);
+
+    std::cout << "Created voxel grid with " << _num_voxels << " voxels" << std::endl;
+    _voxelgrid.resize(_num_voxels, Eigen::Vector3i(-1, -1, -1));
 
 }
 
-unsigned int MultiClassVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
+unsigned int ColoredVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
     
     if (vertex[0] < _grid_min[0] ||
         vertex[1] < _grid_min[1] ||
@@ -35,7 +38,7 @@ unsigned int MultiClassVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
     
 }
 
-bool MultiClassVoxelGrid::isVoxelOccupied(Eigen::Vector3f vertex) {
+bool ColoredVoxelGrid::isVoxelOccupied(Eigen::Vector3f vertex) {
 	
 	uint32_t voxel_id = getEnclosingVoxelID(vertex);
 
@@ -46,50 +49,50 @@ bool MultiClassVoxelGrid::isVoxelOccupied(Eigen::Vector3f vertex) {
 
 }
 
-bool MultiClassVoxelGrid::isVoxelOccupied(uint32_t voxel_id) {
-	return _voxelgrid[voxel_id] != 0;
+bool ColoredVoxelGrid::isVoxelOccupied(uint32_t voxel_id) {
+	return (_voxelgrid[voxel_id][0] != -1 || _voxelgrid[voxel_id][1] != -1 || _voxelgrid[voxel_id][2] != -1) ? true : false;
 }
 
-void MultiClassVoxelGrid::setVoxelClass(uint32_t voxel_id, uint8_t class_i) {
+void ColoredVoxelGrid::setVoxelColor(uint32_t voxel_id, Eigen::Vector3i color) {
     
     if(voxel_id < _num_voxels)
-        _voxelgrid[voxel_id] = class_i;
-    else
-    	std::cout << "Invalid voxel id" << std::endl;
+        _voxelgrid[voxel_id] = color;
+    // else
+    // 	std::cout << "Invalid voxel id" << std::endl;
 }
 
-int MultiClassVoxelGrid::getVoxelClass(uint32_t voxel_id) {
+Eigen::Vector3i ColoredVoxelGrid::getVoxelColor(uint32_t voxel_id) {
     
     if(voxel_id < _num_voxels)
         return _voxelgrid[voxel_id];
 
-    return -1;
+    return Eigen::Vector3i(-1,-1,-1);
 }
 
-Eigen::Vector3i MultiClassVoxelGrid::getVoxelsPerDim() {
+Eigen::Vector3i ColoredVoxelGrid::getVoxelsPerDim() {
     return _voxels_per_dim;
 }
 
-std::vector<uint8_t> MultiClassVoxelGrid::getVoxelGrid() {
+std::vector<Eigen::Vector3i> ColoredVoxelGrid::getVoxelGrid() {
     return _voxelgrid;
 }
 
-void MultiClassVoxelGrid::saveAsRAW(std::string filepath) {
+void ColoredVoxelGrid::saveAsRAW(std::string filepath) {
     
     std::ofstream output_file(filepath);
 
 	for (auto voxel : _voxelgrid)
-		output_file << std::to_string(voxel) << std::endl;
+		output_file << std::to_string(voxel[0]) << " " << std::to_string(voxel[1]) << " " << std::to_string(voxel[2]) << std::endl;
     output_file.close();
 }
 
-void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping) {
+void ColoredVoxelGrid::saveAsPLY(std::string filepath) {
 
 	std::ofstream output_file(filepath);
 
 	long num_occupied_voxels = 0;
 	for (auto voxel : _voxelgrid) {
-		if (voxel != 0)
+		if (voxel != Eigen::Vector3i(-1, -1, -1))
 			num_occupied_voxels++;
 	}
 
@@ -113,12 +116,12 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 				
 				if (isVoxelOccupied(voxel_id)) {
 
-					uint8_t class_i = getVoxelClass(voxel_id);
+					Eigen::Vector3i color = getVoxelColor(voxel_id);
 
 					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
 
 					output_file << voxel_pos[0] << " " << voxel_pos[1] << " " << voxel_pos[2] << " "
-            << class_color_mapping[class_i-1][0] << " " << class_color_mapping[class_i-1][1] << " " << class_color_mapping[class_i-1][2] << " " << "255" << std::endl;
+            << color[0] << " " << color[1] << " " << color[2] << " " << "255" << std::endl;
 
 				}
 
@@ -130,7 +133,7 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 
 }
 
-unsigned int MultiClassVoxelGrid::getNumOccupied() {
+unsigned int ColoredVoxelGrid::getNumOccupied() {
 	
 	unsigned int numOccupied = 0;
 	for (int i = 0; i < _voxels_per_dim[0]; i++) {
