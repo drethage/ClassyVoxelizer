@@ -23,13 +23,13 @@
 class MultiClassVoxelGrid {
 public:
     MultiClassVoxelGrid(Eigen::Vector3f grid_min, Eigen::Vector3f grid_max, float voxel_size);
-    uint32_t getEnclosingVoxelID(Eigen::Vector3f vertex);
+    int getEnclosingVoxelID(Eigen::Vector3f vertex);
     Eigen::Vector3i getVoxelsPerDim();
     void setVoxelClass(uint32_t voxel_id, uint8_t class_i);
     int getVoxelClass(uint32_t voxel_id);
     std::vector<uint8_t> getVoxelGrid();
     void saveAsRAW(std::string filepath);
-    void saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping);
+    void saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping, bool dense);
 	bool isVoxelOccupied(uint32_t voxel_id);
 	bool isVoxelOccupied(Eigen::Vector3f vertex);
 	unsigned int getNumOccupied();

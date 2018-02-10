@@ -19,7 +19,7 @@ ColoredVoxelGrid::ColoredVoxelGrid(Eigen::Vector3f grid_min, Eigen::Vector3f gri
 
 }
 
-unsigned int ColoredVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
+int ColoredVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
     
     if (vertex[0] < _grid_min[0] ||
         vertex[1] < _grid_min[1] ||
@@ -83,16 +83,19 @@ void ColoredVoxelGrid::saveAsRAW(std::string filepath) {
     output_file.close();
 }
 
-void ColoredVoxelGrid::saveAsPLY(std::string filepath) {
+void ColoredVoxelGrid::saveAsPLY(std::string filepath, bool dense) {
 
-	unsigned int num_occupied_voxels = 0;
-	for (const auto& voxel : _voxelgrid) {
-		if (voxel != Eigen::Vector3i(-1, -1, -1))
-			num_occupied_voxels++;
+	unsigned int num_alloc = _num_voxels;
+
+	if (!dense) {
+		num_alloc = 0;
+		for (const auto& voxel : _voxelgrid) {
+			if (voxel != Eigen::Vector3i(-1, -1, -1))
+				num_alloc++;
+		}
 	}
-
-	std::vector<float> vertices(num_occupied_voxels * 3);
-	std::vector<uint8_t> colors(num_occupied_voxels * 4);
+	std::vector<float> vertices(num_alloc * 3);
+	std::vector<uint8_t> colors(num_alloc * 4);
 
 	unsigned int raw_vertex_i = 0;
 	unsigned int raw_color_i = 0;
@@ -102,9 +105,12 @@ void ColoredVoxelGrid::saveAsPLY(std::string filepath) {
 				
 				uint32_t voxel_id = (unsigned int) _voxels_per_dim[0] * _voxels_per_dim[1] * k + _voxels_per_dim[0] * j + i;
 				
-				if (isVoxelOccupied(voxel_id)) {
+				if ( dense || (!dense && isVoxelOccupied(voxel_id))) {
 
-					Eigen::Vector3i color = getVoxelColor(voxel_id);
+					Eigen::Vector3i color(255,255,255);
+					if (isVoxelOccupied(voxel_id))
+						color = getVoxelColor(voxel_id);
+
 					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
 
 					vertices[raw_vertex_i++] = voxel_pos[0];
@@ -128,11 +134,9 @@ void ColoredVoxelGrid::saveAsPLY(std::string filepath) {
 	std::ostream ss(&fb);
 
 	tinyply::PlyFile out_file;
-
 	out_file.add_properties_to_element("vertex", { "x", "y", "z" }, vertices);
 	out_file.add_properties_to_element("vertex", { "red", "green", "blue", "alpha" }, colors);
 	out_file.write(ss, true);
-
 	fb.close();
 
 }

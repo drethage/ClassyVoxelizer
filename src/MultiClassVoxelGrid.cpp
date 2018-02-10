@@ -13,13 +13,13 @@ MultiClassVoxelGrid::MultiClassVoxelGrid(Eigen::Vector3f grid_min, Eigen::Vector
     _grid_max = grid_max;
     _grid_size = grid_max - grid_min;
     _voxel_size = voxel_size;
-	_voxels_per_dim = (_grid_size / voxel_size).cast<int>();   
+	_voxels_per_dim = (_grid_size / voxel_size).cast<int>(); 
     _num_voxels = _voxels_per_dim.prod();
     _voxelgrid.resize(_num_voxels, 0);
 
 }
 
-unsigned int MultiClassVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
+int MultiClassVoxelGrid::getEnclosingVoxelID(Eigen::Vector3f vertex) {
     
     if (vertex[0] < _grid_min[0] ||
         vertex[1] < _grid_min[1] ||
@@ -83,16 +83,19 @@ void MultiClassVoxelGrid::saveAsRAW(std::string filepath) {
     output_file.close();
 }
 
-void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping) {
+void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping, bool dense) {
 
-	unsigned int num_occupied_voxels = 0;
-	for (const auto& voxel : _voxelgrid) {
-		if (voxel != 0)
-			num_occupied_voxels++;
+	unsigned int num_alloc = _num_voxels;
+
+	if (!dense) {
+		num_alloc = 0;
+		for (const auto& voxel : _voxelgrid) {
+			if (voxel != 0)
+				num_alloc++;
+		}
 	}
-
-	std::vector<float> vertices(num_occupied_voxels * 3);
-	std::vector<uint8_t> colors(num_occupied_voxels * 4);
+	std::vector<float> vertices(num_alloc * 3);
+	std::vector<uint8_t> colors(num_alloc * 4);
 
 	unsigned int raw_vertex_i = 0;
 	unsigned int raw_color_i = 0;
@@ -102,10 +105,14 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 				
 				uint32_t voxel_id = (unsigned int) _voxels_per_dim[0] * _voxels_per_dim[1] * k + _voxels_per_dim[0] * j + i;
 				
-				if (isVoxelOccupied(voxel_id)) {
+				if ( dense || (!dense && isVoxelOccupied(voxel_id))) {
 
 					uint8_t class_i = getVoxelClass(voxel_id);
-					Eigen::Vector3i color(class_color_mapping[class_i-1][0], class_color_mapping[class_i-1][1], class_color_mapping[class_i-1][2]);
+
+					Eigen::Vector3i color(255,255,255);
+					if (class_i != 0)
+						color = Eigen::Vector3i(class_color_mapping[class_i-1][0], class_color_mapping[class_i-1][1], class_color_mapping[class_i-1][2]);
+
 					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
 
 					vertices[raw_vertex_i++] = voxel_pos[0];

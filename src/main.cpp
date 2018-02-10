@@ -98,13 +98,7 @@ bool readPlyWithColor(std::string filepath, std::vector<Eigen::Vector3f> &vertic
     num_colors = input_file.request_properties_from_element("vertex", { "red", "green", "blue" }, raw_colors);
     num_faces = input_file.request_properties_from_element("face", { "vertex_indices" }, faces, 3);
 
-    std::cout << "worked " << num_vertices << std::endl;
-
     input_file.read(ss);
-
-    std::cout << "worked 2 " << raw_vertices.size() << std::endl;
-
-    std::cout << "worked 2 " << raw_colors.size() << std::endl;
 
     vertices.resize(num_vertices);
     colors.resize(num_vertices);
@@ -178,9 +172,9 @@ void getVoxelSpaceDimensions(const std::vector<Eigen::Vector3f> &vertices, const
 
 int main (int argc, char* argv[]) {
     
-    std::string usage_message = "\nUsage:\n\n./classyvoxelizer <input> <output> <voxel_size> <class/color>\n\nCurrently only supports ASCII PLY with x, y, z, red, green, blue, alpha properties";
+    std::string usage_message = "\nUsage:\n\n./classyvoxelizer <input> <output> <voxel_size> <class/color> <dense>\n\nCurrently only supports ASCII PLY with x, y, z, red, green, blue, alpha properties";
     
-    if (argc < 5) {
+    if (argc < 6) {
         std::cout << usage_message << std::endl;
         return 0;
     }
@@ -195,13 +189,14 @@ int main (int argc, char* argv[]) {
     std::vector<Eigen::Vector3i> colormap;
     std::vector<Eigen::Vector3i> colors;
 
-    bool ignore_classes = false;
     if (std::string(argv[4]) == "class") {
         readPlyWithClass(input_filepath, vertices, faces, vertex_classes, colormap);
 
     } else if (std::string(argv[4]) == "color") {
         readPlyWithColor(input_filepath, vertices, faces, colors);
     }
+
+    bool dense = (std::string(argv[5]) == "true") ? true : false;
 
     Eigen::Vector3f min;
     Eigen::Vector3f max;
@@ -212,11 +207,11 @@ int main (int argc, char* argv[]) {
     if (std::string(argv[4]) == "class") {
 
         MultiClassVoxelGrid voxelgrid = MultiClassVoxelizer::voxelize(vertices, faces, vertex_classes, min, max, voxel_size);
-        voxelgrid.saveAsPLY(output_filepath, colormap);
+        voxelgrid.saveAsPLY(output_filepath, colormap, dense);
     } else if (std::string(argv[4]) == "color") {
         
         ColoredVoxelGrid voxelgrid = ColoredVoxelizer::voxelize(vertices, faces, colors, min, max, voxel_size);
-        voxelgrid.saveAsPLY(output_filepath);
+        voxelgrid.saveAsPLY(output_filepath, dense);
     }
 
     

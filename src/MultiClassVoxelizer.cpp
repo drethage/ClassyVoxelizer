@@ -32,7 +32,6 @@ MultiClassVoxelGrid MultiClassVoxelizer::voxelize(std::vector<Eigen::Vector3f> &
         
     }
     
-    int vertex_i = 0;
     for (auto split_face_vertex_i : split_faces) {
 
         int voxel_id = voxel_grid.getEnclosingVoxelID(vertices[split_face_vertex_i]);
