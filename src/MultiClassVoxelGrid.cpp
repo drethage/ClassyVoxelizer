@@ -83,6 +83,70 @@ void MultiClassVoxelGrid::saveAsRAW(std::string filepath) {
     output_file.close();
 }
 
+void MultiClassVoxelGrid::saveAsPLYWithLabelProperties(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping, bool dense) {
+
+	unsigned int num_alloc = _num_voxels;
+
+	if (!dense) {
+		num_alloc = 0;
+		for (const auto& voxel : _voxelgrid) {
+			if (voxel != 0)
+				num_alloc++;
+		}
+	}
+	std::vector<float> vertices(num_alloc * 3);
+	std::vector<uint8_t> colors(num_alloc * 4);
+	std::vector<uint8_t> classes(num_alloc);
+
+	unsigned int raw_vertex_i = 0;
+	unsigned int raw_color_i = 0;
+	unsigned int raw_class_i = 0;
+	for (int i = 0; i < _voxels_per_dim[0]; i++) {
+		for (int j = 0; j < _voxels_per_dim[1]; j++) {
+			for (int k = 0; k < _voxels_per_dim[2]; k++) {
+				
+				uint32_t voxel_id = (unsigned int) _voxels_per_dim[0] * _voxels_per_dim[1] * k + _voxels_per_dim[0] * j + i;
+				
+				if ( dense || (!dense && isVoxelOccupied(voxel_id))) {
+
+					uint8_t class_i = getVoxelClass(voxel_id);
+
+					Eigen::Vector3i color(255,255,255);
+					if (!class_color_mapping.empty() && class_i != 0) {
+						color = Eigen::Vector3i(class_color_mapping[class_i-1][0], class_color_mapping[class_i-1][1], class_color_mapping[class_i-1][2]);	
+					}
+
+					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
+
+					vertices[raw_vertex_i++] = voxel_pos[0];
+					vertices[raw_vertex_i++] = voxel_pos[1];
+					vertices[raw_vertex_i++] = voxel_pos[2];
+
+					colors[raw_color_i++] = color[0];
+					colors[raw_color_i++] = color[1];
+					colors[raw_color_i++] = color[2];
+					colors[raw_color_i++] = 255;
+
+					classes[raw_class_i++] = class_i;
+
+				}
+
+			}
+		}		
+	}
+
+	std::filebuf fb;
+	fb.open(filepath, std::ios::out | std::ios::binary);
+	std::ostream ss(&fb);
+
+	tinyply::PlyFile out_file;
+	out_file.add_properties_to_element("vertex", { "x", "y", "z" }, vertices);
+	out_file.add_properties_to_element("vertex", { "label" }, classes);
+	out_file.write(ss, true);
+	fb.close();
+
+}
+
 void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping, bool dense) {
 
 	unsigned int num_alloc = _num_voxels;
@@ -99,6 +163,7 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 
 	unsigned int raw_vertex_i = 0;
 	unsigned int raw_color_i = 0;
+	unsigned int raw_class_i = 0;
 	for (int i = 0; i < _voxels_per_dim[0]; i++) {
 		for (int j = 0; j < _voxels_per_dim[1]; j++) {
 			for (int k = 0; k < _voxels_per_dim[2]; k++) {
@@ -110,8 +175,9 @@ void MultiClassVoxelGrid::saveAsPLY(std::string filepath, std::vector<Eigen::Vec
 					uint8_t class_i = getVoxelClass(voxel_id);
 
 					Eigen::Vector3i color(255,255,255);
-					if (class_i != 0)
-						color = Eigen::Vector3i(class_color_mapping[class_i-1][0], class_color_mapping[class_i-1][1], class_color_mapping[class_i-1][2]);
+					if (class_i != 0) {
+						color = Eigen::Vector3i(class_color_mapping[class_i-1][0], class_color_mapping[class_i-1][1], class_color_mapping[class_i-1][2]);	
+					}
 
 					Eigen::Vector3f voxel_pos((i * _voxel_size) + _grid_min[0] + _voxel_size / 2, (j * _voxel_size) + _grid_min[1] + _voxel_size / 2, (k * _voxel_size) + _grid_min[2] + _voxel_size / 2);
 

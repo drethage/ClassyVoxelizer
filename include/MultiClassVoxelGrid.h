@@ -30,6 +30,7 @@ public:
     std::vector<uint8_t> getVoxelGrid();
     void saveAsRAW(std::string filepath);
     void saveAsPLY(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping, bool dense);
+    void saveAsPLYWithLabelProperties(std::string filepath, std::vector<Eigen::Vector3i> class_color_mapping, bool dense);
 	bool isVoxelOccupied(uint32_t voxel_id);
 	bool isVoxelOccupied(Eigen::Vector3f vertex);
 	unsigned int getNumOccupied();
