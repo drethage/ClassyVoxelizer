@@ -239,8 +239,6 @@ int main (int argc, char* argv[]) {
     Eigen::Vector3f max;
     getVoxelSpaceDimensions(vertices, voxel_size, min, max);
 
-    std::cout << "Voxelizing at " << voxel_size << "m resolution: " << std::flush;
-
     if (std::string(argv[4]) == "color") {
         MultiClassVoxelGrid voxelgrid = MultiClassVoxelizer::voxelize(vertices, faces, vertex_classes, min, max, voxel_size);
         voxelgrid.saveAsPLY(output_filepath, colormap, voxelize);

@@ -13,8 +13,6 @@ MultiClassVoxelGrid MultiClassVoxelizer::voxelize(std::vector<Eigen::Vector3f> &
     MultiClassVoxelGrid voxel_grid(grid_min, grid_max, voxel_size);
     
     std::vector<uint32_t> split_faces;
-
-    int ten_percent_step = faces.size() / 10;
     
     for (int i = 0; i < faces.size(); i+=3) {
         
@@ -22,13 +20,10 @@ MultiClassVoxelGrid MultiClassVoxelizer::voxelize(std::vector<Eigen::Vector3f> &
         face[0] = faces[i];
         face[1] = faces[i+1];
         face[2] = faces[i+2];
-        
-		std::vector<uint32_t> sub_faces;
-		splitFace(voxel_grid, vertices, vertex_classes, face, sub_faces);
-		split_faces.insert(split_faces.end(), sub_faces.begin(), sub_faces.end());
 
-        if ((i % ten_percent_step == 0 || (i-1) % ten_percent_step == 0 || (i-2) % ten_percent_step == 0) && i != 0)
-            std::cout << i / ten_percent_step << "0% " << std::flush;
+        std::vector<uint32_t> sub_faces;
+        splitFace(voxel_grid, vertices, vertex_classes, face, sub_faces);
+        split_faces.insert(split_faces.end(), sub_faces.begin(), sub_faces.end());
         
     }
     
@@ -37,8 +32,6 @@ MultiClassVoxelGrid MultiClassVoxelizer::voxelize(std::vector<Eigen::Vector3f> &
         int voxel_id = voxel_grid.getEnclosingVoxelID(vertices[split_face_vertex_i]);
         voxel_grid.setVoxelClass(voxel_id, vertex_classes[split_face_vertex_i]);
     }
-
-    std::cout << "100%" << std::endl;
 
     return voxel_grid;
     
